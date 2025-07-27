@@ -13,7 +13,7 @@ public class Node48Test {
 
   @Test
   public void test() throws IOException {
-    Node48 node48 = new Node48(0);
+    Node48 node48 = Node48.create(0);
     LeafNode leafNode;
     for (int i = 0; i < 48; i++) {
       leafNode = new LeafNode(i, i);
@@ -65,7 +65,7 @@ public class Node48Test {
 
   @Test
   public void testWithOffsetBeforeBytes() {
-    BranchNode nodes = new Node48(0);
+    BranchNode nodes = Node48.create(0);
     LeafNode leafNode = new LeafNode(0, 0);
     int insertCount = 48;
     int offset = 40;
@@ -109,7 +109,7 @@ public class Node48Test {
 
   @Test
   public void testWithOffsetAndGapsBytes() {
-    BranchNode nodes = new Node48(0);
+    BranchNode nodes = Node48.create(0);
     LeafNode leafNode = new LeafNode(0, 0);
     int insertCount = 48;
     int step = 2;
@@ -156,7 +156,7 @@ public class Node48Test {
 
   @Test
   public void testGrowToNode256() {
-    Node48 node48 = new Node48(0);
+    Node48 node48 = Node48.create(0);
     LeafNode leafNode;
     for (int i = 0; i < 48; i++) {
       leafNode = new LeafNode(i, i);
@@ -175,7 +175,7 @@ public class Node48Test {
 
   @Test
   public void testShrinkToNode16() {
-    Node48 node48 = new Node48(0);
+    Node48 node48 = Node48.create(0);
     LeafNode leafNode;
     for (int i = 0; i < 13; i++) {
       leafNode = new LeafNode(i, i);
@@ -196,7 +196,7 @@ public class Node48Test {
 
   @Test
   public void testNegative() {
-    Node48 node48 = new Node48(0);
+    Node48 node48 = Node48.create(0);
     LeafNode leafNode;
 
     for (int i = 0; i < 48; i++) {
@@ -234,7 +234,7 @@ public class Node48Test {
 
   @Test
   public void testDenseNonZeroBasedKeysSearch() {
-    BranchNode nodes = new Node48(0);
+    BranchNode nodes = Node48.create(0);
     final int insertCount = 47;
     final int keyOffset = 0x20;
 
@@ -272,7 +272,7 @@ public class Node48Test {
 
   @Test
   public void testSparseNonZeroBasedKeysSearch() {
-    BranchNode nodes = new Node48(0);
+    BranchNode nodes = Node48.create(0);
     final int insertCount = 47;
     final int lastValue = insertCount - 1;
     final int step = 3;
@@ -355,7 +355,7 @@ public class Node48Test {
 
   @Test
   public void testGetNextSmallerPosEdgeCase() {
-    BranchNode nodes = new Node48(0);
+    BranchNode nodes = Node48.create(0);
     LeafNode leafNode = new LeafNode(0, 0);
 
     nodes = Node48.insert(nodes, leafNode, (byte) 67);
@@ -373,7 +373,7 @@ public class Node48Test {
 
   @Test
   public void testGetNextPosShouldNotThrowOnLegalInputs() {
-    Node48 node = new Node48(0);
+    Node48 node = Node48.create(0);
     for (int key = 0; key < 256; key++) {
       Assertions.assertEquals(BranchNode.ILLEGAL_IDX, node.getNextSmallerPos(key));
       Assertions.assertEquals(BranchNode.ILLEGAL_IDX, node.getNextLargerPos(key));

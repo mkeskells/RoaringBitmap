@@ -8,13 +8,56 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class Node16 extends BranchNode {
+public abstract class Node16 extends BranchNode {
+
+  public static Node16 create(int compressedPrefixSize) {
+    switch(compressedPrefixSize) {
+      case 0: return new Prefix0();
+      case 1: return new Prefix1();
+      case 2: return new Prefix2();
+      case 3: return new Prefix3();
+      case 4: return new Prefix4();
+      case 5: return new Prefix5();
+      default:throw new IllegalArgumentException();
+    }
+
+  }
+  private static class Prefix0 extends Node16{
+    Prefix0() {
+      super(0);
+    }
+  }
+  private static class Prefix1 extends Node16{
+    Prefix1() {
+      super(1);
+    }
+  }
+  private static class Prefix2 extends Node16{
+    Prefix2() {
+      super(2);
+    }
+  }
+  private static class Prefix3 extends Node16{
+    Prefix3() {
+      super(3);
+    }
+  }
+  private static class Prefix4 extends Node16{
+    Prefix4() {
+      super(4);
+    }
+  }
+  private static class Prefix5 extends Node16{
+    Prefix5() {
+      super(5);
+    }
+  }
 
   long firstV = 0L;
   long secondV = 0L;
   Node[] children = new Node[16];
 
-  public Node16(int compressionLength) {
+  private Node16(int compressionLength) {
     super(NodeType.NODE16, compressionLength);
   }
 
@@ -168,7 +211,7 @@ public class Node16 extends BranchNode {
       currentNode16.secondV = byteBuffer.getLong(8);
       return currentNode16;
     } else {
-      Node48 node48 = new Node48(currentNode16.prefixLength);
+      Node48 node48 = Node48.create(currentNode16.prefixLength);
       for (int i = 0; i < 8; i++) {
         int unsignedIdx = Byte.toUnsignedInt((byte) (currentNode16.firstV >>> ((7 - i) << 3)));
         // i won't be beyond 48
@@ -202,7 +245,7 @@ public class Node16 extends BranchNode {
     count--;
     if (count <= 3) {
       // shrink to node4
-      Node4 node4 = new Node4(prefixLength);
+      Node4 node4 = Node4.create(prefixLength);
       // copy the keys
       node4.key = (int) (firstV >> 32);
       System.arraycopy(children, 0, node4.children, 0, count);

@@ -222,7 +222,7 @@ public class Art {
       byte[] prefix = leafNode.getKeyBytes();
       int commonPrefix = commonPrefixLength(prefix, depth, prefix.length, key, depth, key.length);
 
-      Node4 node4 = new Node4(commonPrefix);
+      Node4 node4 = Node4.create(commonPrefix);
       // copy common prefix
       node4.prefixLength = (byte) commonPrefix;
       System.arraycopy(key, depth, node4.prefix, 0, commonPrefix);
@@ -240,7 +240,7 @@ public class Art {
       int mismatchPos =
           ArraysShim.mismatch(branchNode.prefix, 0, branchNode.prefixLength, key, depth, key.length);
       if (mismatchPos != branchNode.prefixLength) {
-        Node4 node4 = new Node4(mismatchPos);
+        Node4 node4 = Node4.create(mismatchPos);
         // copy prefix
         node4.prefixLength = (byte) mismatchPos;
         System.arraycopy(branchNode.prefix, 0, node4.prefix, 0, mismatchPos);

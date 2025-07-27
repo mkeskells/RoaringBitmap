@@ -8,12 +8,54 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class Node4 extends BranchNode {
+public abstract class Node4 extends BranchNode {
 
+  public static Node4 create(int compressedPrefixSize) {
+    switch(compressedPrefixSize) {
+      case 0: return new Prefix0();
+      case 1: return new Prefix1();
+      case 2: return new Prefix2();
+      case 3: return new Prefix3();
+      case 4: return new Prefix4();
+      case 5: return new Prefix5();
+      default:throw new IllegalArgumentException();
+    }
+
+  }
+  private static class Prefix0 extends Node4{
+    Prefix0() {
+      super(0);
+    }
+  }
+  private static class Prefix1 extends Node4{
+    Prefix1() {
+      super(1);
+    }
+  }
+  private static class Prefix2 extends Node4{
+    Prefix2() {
+      super(2);
+    }
+  }
+  private static class Prefix3 extends Node4{
+    Prefix3() {
+      super(3);
+    }
+  }
+  private static class Prefix4 extends Node4{
+    Prefix4() {
+      super(4);
+    }
+  }
+  private static class Prefix5 extends Node4{
+    Prefix5() {
+      super(5);
+    }
+  }
   int key = 0;
   Node[] children = new Node[4];
 
-  public Node4(int compressedPrefixSize) {
+  private Node4(int compressedPrefixSize) {
     super(NodeType.NODE4, compressedPrefixSize);
   }
 
@@ -99,7 +141,7 @@ public class Node4 extends BranchNode {
       return current;
     } else {
       // grow to Node16
-      Node16 node16 = new Node16(current.prefixLength);
+      Node16 node16 = Node16.create(current.prefixLength);
       node16.count = 4;
       node16.firstV = LongUtils.initWithFirst4Byte(current.key);
       System.arraycopy(current.children, 0, node16.children, 0, 4);

@@ -8,7 +8,7 @@ import java.nio.ByteOrder;
 import java.nio.LongBuffer;
 import java.util.Arrays;
 
-public class Node48 extends BranchNode {
+public abstract class Node48 extends BranchNode {
 
   // the actual byte value of childIndex content won't be beyond 48
   // 256 bytes packed into longs
@@ -21,7 +21,50 @@ public class Node48 extends BranchNode {
   static final byte EMPTY_VALUE = (byte) 0xFF;
   static final long INIT_LONG_VALUE = 0xFFffFFffFFffFFffL;
 
-  public Node48(int compressedPrefixSize) {
+  public static Node48 create(int compressedPrefixSize) {
+    switch(compressedPrefixSize) {
+      case 0: return new Prefix0();
+      case 1: return new Prefix1();
+      case 2: return new Prefix2();
+      case 3: return new Prefix3();
+      case 4: return new Prefix4();
+      case 5: return new Prefix5();
+      default:throw new IllegalArgumentException();
+    }
+
+  }
+  private static class Prefix0 extends Node48{
+    Prefix0() {
+      super(0);
+    }
+  }
+  private static class Prefix1 extends Node48{
+    Prefix1() {
+      super(1);
+    }
+  }
+  private static class Prefix2 extends Node48{
+    Prefix2() {
+      super(2);
+    }
+  }
+  private static class Prefix3 extends Node48{
+    Prefix3() {
+      super(3);
+    }
+  }
+  private static class Prefix4 extends Node48{
+    Prefix4() {
+      super(4);
+    }
+  }
+  private static class Prefix5 extends Node48{
+    Prefix5() {
+      super(5);
+    }
+  }
+
+  private Node48(int compressedPrefixSize) {
     super(NodeType.NODE48, compressedPrefixSize);
     Arrays.fill(childIndex, INIT_LONG_VALUE);
   }
@@ -191,7 +234,7 @@ public class Node48 extends BranchNode {
       return node48;
     } else {
       // grow to Node256
-      Node256 node256 = new Node256(node48.prefixLength);
+      Node256 node256 = Node256.create(node48.prefixLength);
       int currentPos = ILLEGAL_IDX;
       while ((currentPos = node48.getNextLargerPos(currentPos)) != ILLEGAL_IDX) {
         Node childNode = node48.getChild(currentPos);
@@ -213,7 +256,7 @@ public class Node48 extends BranchNode {
     count--;
     if (count <= 12) {
       // shrink to node16
-      Node16 node16 = new Node16(this.prefixLength);
+      Node16 node16 = Node16.create(this.prefixLength);
       int j = 0;
       ByteBuffer byteBuffer = ByteBuffer.allocate(16).order(ByteOrder.BIG_ENDIAN);
       int currentPos = ILLEGAL_IDX;

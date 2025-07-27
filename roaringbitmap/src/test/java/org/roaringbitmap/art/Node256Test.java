@@ -7,7 +7,7 @@ public class Node256Test {
 
   @Test
   public void test() {
-    Node256 node256 = new Node256(0);
+    Node256 node256 = Node256.create(0);
     LeafNode leafNode = new LeafNode(0, 0);
     for (int i = 0; i < 256; i++) {
       node256 = Node256.insert(node256, leafNode, (byte) i);
@@ -40,7 +40,7 @@ public class Node256Test {
 
   @Test
   public void testShrinkToNode48() {
-    Node256 node256 = new Node256(0);
+    Node256 node256 = Node256.create(0);
     LeafNode leafNode = new LeafNode(0, 0);
     for (int i = 0; i < 37; i++) {
       node256 = Node256.insert(node256, leafNode, (byte) i);
@@ -56,7 +56,7 @@ public class Node256Test {
 
   @Test
   public void testWithOffsetBeforeBytes() {
-    Node256 nodes = new Node256(0);
+    Node256 nodes = Node256.create(0);
     LeafNode leafNode = new LeafNode(0, 0);
     int insertCount = 75;
     int offset = 40;
@@ -100,7 +100,7 @@ public class Node256Test {
 
   @Test
   public void testWithOffsetAndGapsBytes() {
-    Node256 nodes = new Node256(0);
+    Node256 nodes = Node256.create(0);
     LeafNode leafNode = new LeafNode(0, 0);
     int insertCount = 75;
     int step = 2;
@@ -147,7 +147,7 @@ public class Node256Test {
 
   @Test
   public void testDenseNonZeroBasedKeysSearch() {
-    Node256 nodes = new Node256(0);
+    Node256 nodes = Node256.create(0);
     final int insertCount = 75;
     final int keyOffset = 0x20;
 
@@ -185,7 +185,7 @@ public class Node256Test {
 
   @Test
   public void testSparseNonZeroBasedKeysSearch() {
-    Node256 nodes = new Node256(0);
+    Node256 nodes = Node256.create(0);
     final int insertCount = 75;
     final int lastValue = insertCount - 1;
     final int step = 3;

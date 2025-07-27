@@ -9,13 +9,55 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 public class Node256 extends BranchNode {
+  public static Node256 create(int compressedPrefixSize) {
+    switch(compressedPrefixSize) {
+      case 0: return new Prefix0();
+      case 1: return new Prefix1();
+      case 2: return new Prefix2();
+      case 3: return new Prefix3();
+      case 4: return new Prefix4();
+      case 5: return new Prefix5();
+      default:throw new IllegalArgumentException();
+    }
+
+  }
+  private static class Prefix0 extends Node256{
+    Prefix0() {
+      super(0);
+    }
+  }
+  private static class Prefix1 extends Node256{
+    Prefix1() {
+      super(1);
+    }
+  }
+  private static class Prefix2 extends Node256{
+    Prefix2() {
+      super(2);
+    }
+  }
+  private static class Prefix3 extends Node256{
+    Prefix3() {
+      super(3);
+    }
+  }
+  private static class Prefix4 extends Node256{
+    Prefix4() {
+      super(4);
+    }
+  }
+  private static class Prefix5 extends Node256{
+    Prefix5() {
+      super(5);
+    }
+  }
 
   Node[] children = new Node[256];
   // a helper utility field
   long[] bitmapMask = new long[4];
   private static final long LONG_MASK = 0xffffffffffffffffL;
 
-  public Node256(int compressedPrefixSize) {
+  private Node256(int compressedPrefixSize) {
     super(NodeType.NODE256, compressedPrefixSize);
   }
 
@@ -155,7 +197,7 @@ public class Node256 extends BranchNode {
     bitmapMask[longPos] &= ~(1L << pos);
     this.count--;
     if (this.count <= 36) {
-      Node48 node48 = new Node48(this.prefixLength);
+      Node48 node48 = Node48.create(this.prefixLength);
       int j = 0;
       int currentPos = ILLEGAL_IDX;
       while ((currentPos = getNextLargerPos(currentPos)) != ILLEGAL_IDX) {

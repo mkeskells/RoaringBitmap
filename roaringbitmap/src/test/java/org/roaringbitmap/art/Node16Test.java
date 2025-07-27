@@ -7,7 +7,7 @@ public class Node16Test {
 
   @Test
   public void test() {
-    Node4 node4 = new Node4(0);
+    Node4 node4 = Node4.create(0);
     // insert 4 nodes
     for (int i = 0; i < 4; i++) {
       LeafNode leafNode = new LeafNode(i, i);
@@ -51,7 +51,7 @@ public class Node16Test {
 
   @Test
   public void testGrowToNode48() {
-    Node16 node16 = new Node16(0);
+    Node16 node16 = Node16.create(0);
     LeafNode leafNode;
     for (int i = 0; i < 16; i++) {
       leafNode = new LeafNode(i, i);
@@ -69,7 +69,7 @@ public class Node16Test {
 
   @Test
   public void testVisit() {
-    Node16 node16 = new Node16(0);
+    Node16 node16 = Node16.create(0);
     final int insertCount = 15;
     final int lastValue = insertCount - 1;
 
@@ -102,7 +102,7 @@ public class Node16Test {
 
   @Test
   public void testDenseNonZeroBasedKeysSearch() {
-    BranchNode nodes = new Node16(0);
+    BranchNode nodes = Node16.create(0);
     final int insertCount = 15;
     final int lastValue = insertCount - 1;
     final int keyOffset = 0x20;
@@ -143,7 +143,7 @@ public class Node16Test {
 
   @Test
   public void testSparseNonZeroBasedKeysSearch() {
-    BranchNode nodes = new Node16(0);
+    BranchNode nodes = Node16.create(0);
     final int insertCount = 15;
     final int lastValue = insertCount - 1;
 
@@ -229,7 +229,7 @@ public class Node16Test {
 
   @Test
   public void testWithOffsetBeforeBytes() {
-    BranchNode nodes = new Node16(0);
+    BranchNode nodes = Node16.create(0);
     LeafNode leafNode = new LeafNode(0, 0);
     int insertCount = 16;
     int offset = 40;
@@ -268,7 +268,7 @@ public class Node16Test {
 
   @Test
   public void testWithOffsetAndGapsBytes() {
-    BranchNode nodes = new Node16(0);
+    BranchNode nodes = Node16.create(0);
     LeafNode leafNode = new LeafNode(0, 0);
     int insertCount = 16;
     int step = 2;

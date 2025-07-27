@@ -16,7 +16,7 @@ public class Node4Test {
     LeafNode leafNode1 = new LeafNode(1, 1);
     LeafNode leafNode2 = new LeafNode(2, 2);
     LeafNode leafNode3 = new LeafNode(3, 3);
-    Node4 node4 = new Node4(0);
+    Node4 node4 = Node4.create(0);
     byte key1 = 2;
     Node4.insert(node4, leafNode1, key1);
     Assertions.assertTrue(node4.getMaxPos() == 0);
@@ -63,7 +63,7 @@ public class Node4Test {
     byte key1 = 0x10;
     int key1Pos = 0;
 
-    Node4 node = new Node4(0);
+    Node4 node = Node4.create(0);
 
     Node4.insert(node, ln1, key1);
 
@@ -106,7 +106,7 @@ public class Node4Test {
     int key1Pos = 0;
     int key2Pos = 1;
 
-    Node4 node = new Node4(0);
+    Node4 node = Node4.create(0);
 
     Node4.insert(node, ln1, key1);
     Node4.insert(node, ln2, key2);
@@ -168,7 +168,7 @@ public class Node4Test {
 
   @Test
   public void testDenseNonZeroBasedKeysSearch() {
-    BranchNode nodes = new Node4(0);
+    BranchNode nodes = Node4.create(0);
     final int insertCount = 3;
     final int keyOffset = 0x20;
 
@@ -208,7 +208,7 @@ public class Node4Test {
 
   @Test
   public void testSparseNonZeroBasedKeysSearch() {
-    BranchNode nodes = new Node4(0);
+    BranchNode nodes = Node4.create(0);
     final int insertCount = 3;
     final int lastValue = insertCount - 1;
 
@@ -294,7 +294,7 @@ public class Node4Test {
 
   @Test
   public void testWithOffsetBeforeBytes() {
-    BranchNode nodes = new Node4(0);
+    BranchNode nodes = Node4.create(0);
     LeafNode leafNode = new LeafNode(0, 0);
     int insertCount = 4;
     int offset = 40;
@@ -333,7 +333,7 @@ public class Node4Test {
 
   @Test
   public void testWithOffsetAndGapsBytes() {
-    BranchNode nodes = new Node4(0);
+    BranchNode nodes = Node4.create(0);
     LeafNode leafNode = new LeafNode(0, 0);
     int insertCount = 4;
     int step = 2;
