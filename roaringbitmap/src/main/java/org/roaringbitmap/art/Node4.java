@@ -10,53 +10,155 @@ import java.nio.ByteBuffer;
 
 public abstract class Node4 extends BranchNode {
 
+  @Override
+  public Node4 withPrefix(byte compressedPrefixSize, long prefix) {
+    Node4 result = create(compressedPrefixSize, prefix);
+    result.key = this.key;
+    result.children = this.children;
+    result.count = this.count;
+    return result;
+  }
+
+  public Node4 withPrefix(byte compressedPrefixSize, byte[] prefix) {
+    if (compressedPrefixSize != prefix.length) throw new IllegalStateException();
+    return withPrefix(compressedPrefixSize, OnlyDuringMigration.prefixToLong(prefix));
+  }
   public static Node4 create(int compressedPrefixSize) {
+    
+  }
+  public static Node4 create(int compressedPrefixSize, long prefix) {
     switch(compressedPrefixSize) {
       case 0: return new Prefix0();
-      case 1: return new Prefix1();
-      case 2: return new Prefix2();
-      case 3: return new Prefix3();
-      case 4: return new Prefix4();
-      case 5: return new Prefix5();
+      case 1: return new Prefix1(prefix);
+      case 2: return new Prefix2(prefix);
+      case 3: return new Prefix3(prefix);
+      case 4: return new Prefix4(prefix);
+      case 5: return new Prefix5(prefix);
       default:throw new IllegalArgumentException();
     }
 
   }
   private static class Prefix0 extends Node4{
-    Prefix0() {
-      super(0);
+    @Override
+    public byte prefixLength() {
+      return 0;
+    }
+
+    @Override
+    public byte[] prefix() {
+      return new byte[0];
+    }
+
+    @Override
+    public long prefixAsLong() {
+      return 0L;
     }
   }
   private static class Prefix1 extends Node4{
-    Prefix1() {
-      super(1);
+    private final byte prefix;
+    Prefix1(long prefix) {
+      this.prefix = (byte) prefix;
+    }
+    @Override
+    public byte prefixLength() {
+      return 1;
+    }
+
+    @Override
+    public byte[] prefix() {
+      return OnlyDuringMigration.longToPrefix(prefixLength(),prefix);
+    }
+
+    @Override
+    public long prefixAsLong() {
+      return prefix;
     }
   }
   private static class Prefix2 extends Node4{
-    Prefix2() {
-      super(2);
+    private final short prefix;
+    Prefix2(long prefix) {
+      this.prefix = (short) prefix;
+    }
+    @Override
+    public byte prefixLength() {
+      return 2;
+    }
+
+    @Override
+    public byte[] prefix() {
+      return OnlyDuringMigration.longToPrefix(prefixLength(),prefix);
+    }
+
+    @Override
+    public long prefixAsLong() {
+      return prefix;
     }
   }
   private static class Prefix3 extends Node4{
-    Prefix3() {
-      super(3);
+    private final int prefix;
+    Prefix3(long prefix) {
+      this.prefix = (int) prefix;
+    }
+    @Override
+    public byte prefixLength() {
+      return 4;
+    }
+
+    @Override
+    public byte[] prefix() {
+      return OnlyDuringMigration.longToPrefix(prefixLength(),prefix);
+    }
+
+    @Override
+    public long prefixAsLong() {
+      return prefix;
     }
   }
   private static class Prefix4 extends Node4{
-    Prefix4() {
-      super(4);
+    private final int prefix;
+    Prefix4(long prefix) {
+      this.prefix = (int) prefix;
+    }
+    @Override
+    public byte prefixLength() {
+      return 4;
+    }
+
+    @Override
+    public byte[] prefix() {
+      return OnlyDuringMigration.longToPrefix(prefixLength(),prefix);
+    }
+
+    @Override
+    public long prefixAsLong() {
+      return prefix;
     }
   }
   private static class Prefix5 extends Node4{
-    Prefix5() {
-      super(5);
+    private final long prefix;
+    Prefix5(long prefix) {
+      this.prefix = prefix;
+    }
+    @Override
+    public byte prefixLength() {
+      return 5;
+    }
+
+    @Override
+    public byte[] prefix() {
+      return OnlyDuringMigration.longToPrefix(prefixLength(),prefix);
+    }
+
+    @Override
+    public long prefixAsLong() {
+      return prefix;
     }
   }
   int key = 0;
   Node[] children = new Node[4];
 
-  private Node4(int compressedPrefixSize) {
-    super(NodeType.NODE4, compressedPrefixSize);
+  private Node4() {
+    super(NodeType.NODE4);
   }
 
   @Override
@@ -141,7 +243,7 @@ public abstract class Node4 extends BranchNode {
       return current;
     } else {
       // grow to Node16
-      Node16 node16 = Node16.create(current.prefixLength);
+      Node16 node16 = Node16.create(current.prefixLength());
       node16.count = 4;
       node16.firstV = LongUtils.initWithFirst4Byte(current.key);
       System.arraycopy(current.children, 0, node16.children, 0, 4);
@@ -165,13 +267,22 @@ public abstract class Node4 extends BranchNode {
       Node childNode = children[0];
       if (childNode instanceof BranchNode) {
         BranchNode child = (BranchNode) childNode;
-        byte newLength = (byte) (child.prefixLength + this.prefixLength + 1);
+
+        long newPrefixAsLong = this.prefixAsLong();
+        newPrefixAsLong = (newPrefixAsLong << 8) | IntegerUtil.firstByte(key);
+        newPrefixAsLong = (newPrefixAsLong << (8* (child.prefixLength()))) | child.prefixAsLong();
+
+        //TODO remove start
+        byte newLength = (byte) (child.prefixLength() + this.prefixLength() + 1);
         byte[] newPrefix = new byte[newLength];
-        System.arraycopy(this.prefix, 0, newPrefix, 0, this.prefixLength);
-        newPrefix[this.prefixLength] = IntegerUtil.firstByte(key);
-        System.arraycopy(child.prefix, 0, newPrefix, this.prefixLength + 1, child.prefixLength);
-        child.prefixLength = newLength;
-        child.prefix = newPrefix;
+        System.arraycopy(this.prefix(), 0, newPrefix, 0, this.prefixLength());
+        newPrefix[this.prefixLength()] = IntegerUtil.firstByte(key);
+        System.arraycopy(child.prefix(), 0, newPrefix, this.prefixLength() + 1, child.prefixLength());
+        long prefixLong = OnlyDuringMigration.prefixToLong(newPrefix);
+        if (prefixLong != newPrefixAsLong) throw new IllegalStateException();
+        //TODO remove end
+
+        return child.withPrefix(newLength, prefixLong);
       }
       return childNode;
     }

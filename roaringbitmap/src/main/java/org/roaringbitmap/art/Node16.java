@@ -58,7 +58,7 @@ public abstract class Node16 extends BranchNode {
   Node[] children = new Node[16];
 
   private Node16(int compressionLength) {
-    super(NodeType.NODE16, compressionLength);
+    super(NodeType.NODE16);
   }
 
   @Override
@@ -211,7 +211,7 @@ public abstract class Node16 extends BranchNode {
       currentNode16.secondV = byteBuffer.getLong(8);
       return currentNode16;
     } else {
-      Node48 node48 = Node48.create(currentNode16.prefixLength);
+      Node48 node48 = Node48.create(currentNode16.prefixLength(),currentNode16.prefixAsLong());
       for (int i = 0; i < 8; i++) {
         int unsignedIdx = Byte.toUnsignedInt((byte) (currentNode16.firstV >>> ((7 - i) << 3)));
         // i won't be beyond 48
@@ -245,7 +245,7 @@ public abstract class Node16 extends BranchNode {
     count--;
     if (count <= 3) {
       // shrink to node4
-      Node4 node4 = Node4.create(prefixLength);
+      Node4 node4 = Node4.create(prefixLength());
       // copy the keys
       node4.key = (int) (firstV >> 32);
       System.arraycopy(children, 0, node4.children, 0, count);

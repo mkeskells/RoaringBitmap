@@ -21,7 +21,7 @@ public abstract class Node48 extends BranchNode {
   static final byte EMPTY_VALUE = (byte) 0xFF;
   static final long INIT_LONG_VALUE = 0xFFffFFffFFffFFffL;
 
-  public static Node48 create(int compressedPrefixSize) {
+  public static Node48 create(int compressedPrefixSize, long prefixAsLong) {
     switch(compressedPrefixSize) {
       case 0: return new Prefix0();
       case 1: return new Prefix1();
@@ -65,7 +65,7 @@ public abstract class Node48 extends BranchNode {
   }
 
   private Node48(int compressedPrefixSize) {
-    super(NodeType.NODE48, compressedPrefixSize);
+    super(NodeType.NODE48);
     Arrays.fill(childIndex, INIT_LONG_VALUE);
   }
 
@@ -234,7 +234,7 @@ public abstract class Node48 extends BranchNode {
       return node48;
     } else {
       // grow to Node256
-      Node256 node256 = Node256.create(node48.prefixLength);
+      Node256 node256 = Node256.create(node48.prefixLength());
       int currentPos = ILLEGAL_IDX;
       while ((currentPos = node48.getNextLargerPos(currentPos)) != ILLEGAL_IDX) {
         Node childNode = node48.getChild(currentPos);
@@ -256,7 +256,7 @@ public abstract class Node48 extends BranchNode {
     count--;
     if (count <= 12) {
       // shrink to node16
-      Node16 node16 = Node16.create(this.prefixLength);
+      Node16 node16 = Node16.create(this.prefixLength());
       int j = 0;
       ByteBuffer byteBuffer = ByteBuffer.allocate(16).order(ByteOrder.BIG_ENDIAN);
       int currentPos = ILLEGAL_IDX;

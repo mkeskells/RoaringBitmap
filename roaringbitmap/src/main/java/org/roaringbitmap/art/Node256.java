@@ -58,7 +58,7 @@ public class Node256 extends BranchNode {
   private static final long LONG_MASK = 0xffffffffffffffffL;
 
   private Node256(int compressedPrefixSize) {
-    super(NodeType.NODE256, compressedPrefixSize);
+    super(NodeType.NODE256);
   }
 
   @Override
@@ -197,7 +197,7 @@ public class Node256 extends BranchNode {
     bitmapMask[longPos] &= ~(1L << pos);
     this.count--;
     if (this.count <= 36) {
-      Node48 node48 = Node48.create(this.prefixLength);
+      Node48 node48 = Node48.create(this.prefixLength());
       int j = 0;
       int currentPos = ILLEGAL_IDX;
       while ((currentPos = getNextLargerPos(currentPos)) != ILLEGAL_IDX) {

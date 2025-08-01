@@ -7,11 +7,7 @@ import java.nio.ByteBuffer;
 public abstract class BranchNode extends Node {
 
     // node type
-    protected NodeType nodeType;
-    // length of compressed path(prefix)
-    protected byte prefixLength;
-    // the compressed path path (prefix)
-    protected byte[] prefix;
+    protected final NodeType nodeType;
     // number of non-null children, the largest value will not beyond 255
     // to benefit calculation,we keep the value as a short type
     protected short count;
@@ -20,16 +16,25 @@ public abstract class BranchNode extends Node {
     /**
      * constructor
      *
-     * @param nodeType             the node type
-     * @param compressedPrefixSize the prefix byte array size,less than or equal to 6
+     * @param nodeType the node type
      */
-    public BranchNode(NodeType nodeType, int compressedPrefixSize) {
+    public BranchNode(NodeType nodeType) {
         super();
         this.nodeType = nodeType;
-        this.prefixLength = (byte) compressedPrefixSize;
-        prefix = new byte[prefixLength];
         count = 0;
     }
+    /**
+     * length of compressed path(prefix) 
+     */
+    public abstract byte prefixLength();
+    /**
+     * the compressed path path (prefix)
+     */
+    public abstract byte[] prefix();
+    /**
+     * the compressed path path (prefix)
+     */
+    public abstract long prefixAsLong();
 
     /**
      * search the position of the input byte key in the node's key byte array part
@@ -117,8 +122,8 @@ public abstract class BranchNode extends Node {
      * @param dst the destination node
      */
     public static void copyPrefix(BranchNode src, BranchNode dst) {
-        dst.prefixLength = src.prefixLength;
-        System.arraycopy(src.prefix, 0, dst.prefix, 0, src.prefixLength);
+        dst.prefixLength() = src.prefixLength();
+        System.arraycopy(src.prefix, 0, dst.prefix, 0, src.prefixLength());
     }
 
     /**
@@ -215,24 +220,31 @@ public abstract class BranchNode extends Node {
         dataOutput.writeByte((byte) this.nodeType.ordinal());
         // non null object count
         dataOutput.writeShort(Short.reverseBytes(this.count));
-        dataOutput.writeByte(this.prefixLength);
-        if (prefixLength > 0) {
-            dataOutput.write(this.prefix, 0, this.prefixLength);
+        dataOutput.writeByte(this.prefixLength());
+        if (prefixLength() > 0) {
+            dataOutput.write(this.prefix(), 0, this.prefixLength());
         }
     }
 
     protected void serializeHeader(ByteBuffer byteBuffer) throws IOException {
         byteBuffer.put((byte) this.nodeType.ordinal());
         byteBuffer.putShort(this.count);
-        byteBuffer.put(this.prefixLength);
-        if (prefixLength > 0) {
-            byteBuffer.put(this.prefix, 0, prefixLength);
+        byteBuffer.put(this.prefixLength());
+        if (prefixLength() > 0) {
+            byteBuffer.put(this.prefix(), 0, prefixLength());
         }
     }
 
     protected int serializeHeaderSizeInBytes() {
-        return super.serializeHeaderSizeInBytes() + prefixLength;
+        return super.serializeHeaderSizeInBytes() + prefixLength();
     }
 
-
+    /**
+     * return a copy of this node with a changed prefix. After calling this method no access should be make to `this`
+     * as some internal fields may be shared with the returned value
+     * @param newPrefixLength the new length of the prefix
+     * @param newPrefix the new prefix
+     * @return a shallow copy with changed prefix
+     */
+    protected abstract BranchNode withPrefix(byte newPrefixLength, long newPrefix);
 }

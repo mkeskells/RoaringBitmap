@@ -143,37 +143,37 @@ public abstract class Node {
   private static Node deserializeHeader(DataInput dataInput) throws IOException {
     int nodeTypeOrdinal = dataInput.readByte();
     short count = Short.reverseBytes(dataInput.readShort());
-    byte prefixLength = dataInput.readByte();
+    byte prefixLength() = dataInput.readByte();
     byte[] prefix = new byte[0];
-    if (prefixLength > 0) {
-      prefix = new byte[prefixLength];
+    if (prefixLength() > 0) {
+      prefix = new byte[prefixLength()];
       dataInput.readFully(prefix);
     }
     if (nodeTypeOrdinal == NodeType.NODE4.ordinal()) {
-      Node4 node4 = Node4.create(prefixLength);
-      node4.prefixLength = prefixLength;
-      node4.prefix = prefix;
+      Node4 node4 = Node4.create(prefixLength());
+      node4.prefixLength() = prefixLength();
+      node4.prefix() = prefix;
       node4.count = count;
       return node4;
     }
     if (nodeTypeOrdinal == NodeType.NODE16.ordinal()) {
-      Node16 node16 = Node16.create(prefixLength);
-      node16.prefixLength = prefixLength;
-      node16.prefix = prefix;
+      Node16 node16 = Node16.create(prefixLength());
+      node16.prefixLength() = prefixLength();
+      node16.prefix() = prefix;
       node16.count = count;
       return node16;
     }
     if (nodeTypeOrdinal == NodeType.NODE48.ordinal()) {
-      Node48 node48 = Node48.create(prefixLength);
-      node48.prefixLength = prefixLength;
-      node48.prefix = prefix;
+      Node48 node48 = Node48.create(prefixLength());
+      node48.prefixLength() = prefixLength();
+      node48.prefix() = prefix;
       node48.count = count;
       return node48;
     }
     if (nodeTypeOrdinal == NodeType.NODE256.ordinal()) {
-      Node256 node256 = Node256.create(prefixLength);
-      node256.prefixLength = prefixLength;
-      node256.prefix = prefix;
+      Node256 node256 = Node256.create(prefixLength());
+      node256.prefixLength() = prefixLength();
+      node256.prefix() = prefix;
       node256.count = count;
       return node256;
     }
@@ -186,37 +186,37 @@ public abstract class Node {
   private static Node deserializeHeader(ByteBuffer byteBuffer) throws IOException {
     int nodeTypeOrdinal = byteBuffer.get();
     short count = byteBuffer.getShort();
-    byte prefixLength = byteBuffer.get();
+    byte prefixLength() = byteBuffer.get();
     byte[] prefix = new byte[0];
-    if (prefixLength > 0) {
-      prefix = new byte[prefixLength];
+    if (prefixLength() > 0) {
+      prefix = new byte[prefixLength()];
       byteBuffer.get(prefix);
     }
     if (nodeTypeOrdinal == NodeType.NODE4.ordinal()) {
-      Node4 node4 = Node4.create(prefixLength);
-      node4.prefixLength = prefixLength;
-      node4.prefix = prefix;
+      Node4 node4 = Node4.create(prefixLength());
+      node4.prefixLength() = prefixLength();
+      node4.prefix() = prefix;
       node4.count = count;
       return node4;
     }
     if (nodeTypeOrdinal == NodeType.NODE16.ordinal()) {
-      Node16 node16 = Node16.create(prefixLength);
-      node16.prefixLength = prefixLength;
-      node16.prefix = prefix;
+      Node16 node16 = Node16.create(prefixLength());
+      node16.prefixLength() = prefixLength();
+      node16.prefix() = prefix;
       node16.count = count;
       return node16;
     }
     if (nodeTypeOrdinal == NodeType.NODE48.ordinal()) {
-      Node48 node48 = Node48.create(prefixLength);
-      node48.prefixLength = prefixLength;
-      node48.prefix = prefix;
+      Node48 node48 = Node48.create(prefixLength());
+      node48.prefixLength() = prefixLength();
+      node48.prefix() = prefix;
       node48.count = count;
       return node48;
     }
     if (nodeTypeOrdinal == NodeType.NODE256.ordinal()) {
-      Node256 node256 = Node256.create(prefixLength);
-      node256.prefixLength = prefixLength;
-      node256.prefix = prefix;
+      Node256 node256 = Node256.create(prefixLength());
+      node256.prefixLength() = prefixLength();
+      node256.prefix() = prefix;
       node256.count = count;
       return node256;
     }
