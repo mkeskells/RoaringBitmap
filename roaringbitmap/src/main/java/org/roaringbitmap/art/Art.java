@@ -1,11 +1,17 @@
 package org.roaringbitmap.art;
 
 import org.roaringbitmap.ArraysShim;
+import org.roaringbitmap.Container;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.function.LongFunction;
+import java.util.function.Supplier;
+import java.util.function.ToLongFunction;
+
+import static org.roaringbitmap.art.BranchNode.ILLEGAL_IDX;
 
 /**
  * See: https://db.in.tum.de/~leis/papers/ART.pdf a cpu cache friendly main memory data structure.
@@ -51,7 +57,7 @@ public class Art {
       LeafNode leafNode = (LeafNode) node;
       return leafNode.containerIdx;
     }
-    return BranchNode.ILLEGAL_IDX;
+    return ILLEGAL_IDX;
   }
 
   private Node findByKey(Node node, byte[] key, int depth) {
@@ -86,7 +92,7 @@ public class Art {
         depth += branchNode.prefixLength;
       }
       int pos = branchNode.getChildPos(key[depth]);
-      if (pos == BranchNode.ILLEGAL_IDX) {
+      if (pos == ILLEGAL_IDX) {
         return null;
       }
       node = branchNode.getChild(pos);
@@ -114,7 +120,7 @@ public class Art {
     if (toolkit != null) {
       return toolkit.matchedContainerId;
     }
-    return BranchNode.ILLEGAL_IDX;
+    return ILLEGAL_IDX;
   }
 
   protected Toolkit removeSpecifyKey(Node node, byte[] key, int dep) {
@@ -145,7 +151,7 @@ public class Art {
       dep += branchNode.prefixLength;
     }
     int pos = branchNode.getChildPos(key[dep]);
-    if (pos != BranchNode.ILLEGAL_IDX) {
+    if (pos != ILLEGAL_IDX) {
       Node child = branchNode.getChild(pos);
       if (child instanceof LeafNode && leafMatch((LeafNode) child, key, dep)) {
         // found matched leaf node from the current node.
@@ -177,7 +183,9 @@ public class Art {
     return null;
   }
 
-  class Toolkit {
+
+
+    class Toolkit {
 
     Node freshMatchedParentNode; // indicating a fresh parent node while the original
     // parent node shrunk and changed
@@ -211,6 +219,92 @@ public class Art {
       return false;
     }
   }
+  static long onlyHighPart(long l) {
+    return l & 0xFFffFFffFFff0000L;
+  }
+  static byte getByte(long highPart, int index) {
+    return (byte)(highPart >>> (56 - (index <<3)));
+  }
+  public <T> long findOrCreate(long highPart, ToLongFunction<Supplier<T>> nextContainer, Supplier<T> ifNotFound) {
+    highPart = onlyHighPart(highPart);
+    LeafNode result;
+
+    if (root == null) {
+      result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
+      root = result;
+    } else {
+      int depth = 0;
+      int parentIndexInGrandParent = ILLEGAL_IDX;
+      BranchNode grandParent = null;
+      Node parent = root;
+      // on  each cycle
+      // if gParent == null, parent will be the next root
+      // if gParent != null, parent should replace gParent[parentIndexInGrandParent]
+      // depth is the depth of parent in the trie
+      // result is the leaf node, or null if we are just finding
+      while (true) {
+
+        if (parent instanceof LeafNode) {
+          LeafNode leafNode = (LeafNode) parent;
+          if (leafNode.getKey() == highPart) {
+            result = leafNode;
+          } else {
+            if (ifNotFound == null) {
+              return -1;
+            }
+            result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
+            Node4 split = Node4.create(leafNode, result, highPart, depth);
+            parent = split;
+          }
+          break;
+        } else {
+          BranchNode parentBranch = (BranchNode) parent;
+          //is parent the real parent - does the prefix match
+          if (parentBranch.prefixLength > 0) {
+            if (prefixMatches(parentBranch, depth, highPart)) {
+              depth += parentBranch.prefixLength;
+            } else {
+              if (ifNotFound == null) {
+                return -1;
+              }
+              result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
+              Node4 split = Node4.create(parentBranch, result, highPart, depth);
+              parent = split;
+              break;
+            }
+          }
+          //OK so parent is ok, and depth is adjusted. Let try to move to the next level
+
+          byte nextIndex = getByte(highPart, depth);
+          //TODO create getChildPosOrInsertionPoint
+          int childPos = parentBranch.getChildPos(nextIndex);
+          if (childPos == ILLEGAL_IDX) {
+            if (ifNotFound == null) {
+              return -1;
+            }
+            result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
+            parent = parentBranch.add(leaf, depth);
+            break;
+          } else {
+            Node childNode = parentBranch.getChild(childPos);
+
+            grandParent = parentBranch;
+            parentIndexInGrandParent = childPos;
+            parent = childNode;
+            depth += 1;
+
+          }
+        }
+      }
+      if (grandParent == null) {
+        root = parent;
+      } else {
+        grandParent.replaceNode(parentIndexInGrandParent, parent);
+      }
+    }
+    return result.getContainerIdx();
+  }
+
 
   private Node insert(Node node, byte[] key, int depth, long containerIdx) {
     if (node == null) {
@@ -262,7 +356,7 @@ public class Art {
       depth += branchNode.prefixLength;
     }
     int pos = branchNode.getChildPos(key[depth]);
-    if (pos != BranchNode.ILLEGAL_IDX) {
+    if (pos != ILLEGAL_IDX) {
       // insert the key as current internal node's children's child node.
       Node child = branchNode.getChild(pos);
       Node freshOne = insert(child, key, depth + 1, containerIdx);
@@ -349,8 +443,8 @@ public class Art {
       // serialize the internal node itself first
       branchNode.serialize(dataOutput);
       // then all the internal node's children
-      int nexPos = branchNode.getNextLargerPos(BranchNode.ILLEGAL_IDX);
-      while (nexPos != BranchNode.ILLEGAL_IDX) {
+      int nexPos = branchNode.getNextLargerPos(ILLEGAL_IDX);
+      while (nexPos != ILLEGAL_IDX) {
         // serialize all the not null child node
         Node child = branchNode.getChild(nexPos);
         serialize(child, dataOutput);
@@ -368,8 +462,8 @@ public class Art {
       // serialize the internal node itself first
       branchNode.serialize(byteBuffer);
       // then all the internal node's children
-      int nexPos = branchNode.getNextLargerPos(BranchNode.ILLEGAL_IDX);
-      while (nexPos != BranchNode.ILLEGAL_IDX) {
+      int nexPos = branchNode.getNextLargerPos(ILLEGAL_IDX);
+      while (nexPos != ILLEGAL_IDX) {
         // serialize all the not null child node
         Node child = branchNode.getChild(nexPos);
         serialize(child, byteBuffer);
@@ -440,8 +534,8 @@ public class Art {
       int currentNodeSize = branchNode.serializeSizeInBytes();
       // then all the internal node's children
       long childrenTotalSize = 0L;
-      int nexPos = branchNode.getNextLargerPos(BranchNode.ILLEGAL_IDX);
-      while (nexPos != BranchNode.ILLEGAL_IDX) {
+      int nexPos = branchNode.getNextLargerPos(ILLEGAL_IDX);
+      while (nexPos != ILLEGAL_IDX) {
         // serialize all the not null child node
         Node child = branchNode.getChild(nexPos);
         long childSize = serializeSizeInBytes(child);
