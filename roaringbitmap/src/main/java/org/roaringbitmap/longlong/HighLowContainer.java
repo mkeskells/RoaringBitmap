@@ -16,6 +16,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.NoSuchElementException;
+import java.util.function.Supplier;
 
 public class HighLowContainer {
 
@@ -27,6 +28,10 @@ public class HighLowContainer {
   public HighLowContainer() {
     art = new Art();
     containers = new Containers();
+  }
+
+  private long createContainer( Supplier<Container> newContainer) {
+    return containers.addContainer(newContainer.get());
   }
 
   public Container getContainer(long containerIdx) {
@@ -46,6 +51,16 @@ public class HighLowContainer {
       Container container = containers.getContainer(containerIdx);
       return new ContainerWithIndex(container, containerIdx);
     }
+  }
+
+    /**
+     *
+     * search the container by the given 48 bit high part key
+     * @param highPart the 48 bit key, in the upper 48 bits
+     * @return the container with the container index
+     */
+  public long findOrCreateContainerIndex(long highPart, Supplier<Container> ifNotFound) {
+      long result = art.findOrCreate(highPart, this::createContainer, ifNotFound);
   }
 
   /**

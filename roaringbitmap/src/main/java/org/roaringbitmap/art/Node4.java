@@ -17,6 +17,27 @@ public class Node4 extends BranchNode {
     super(NodeType.NODE4, compressedPrefixSize);
   }
 
+  public static Node4 create(BranchNode node1, LeafNode node2,int depth) {
+    int prefixLength = commonPrefix(node1, node2, depth);
+    if (Long.compareUnsigned(node1.getKey(), node2.getKey()) > 0) {
+      return create(node2, node1, prefixLength, depth);
+    } else {
+      return createOrdered(node1, node2, prefixLength, depth);
+    }
+
+  }
+  public static Node4 create(LeafNode node1, LeafNode node2,int depth) {
+    int prefixLength = commonPrefix(node1, node2, depth);
+    if (Long.compareUnsigned(node1.getKey(), node2.getKey()) > 0) {
+      return create(node2, node1, prefixLength, depth);
+    } else {
+      return createOrdered(node1, node2, prefixLength, depth);
+    }
+  }
+  public static Node4 createOrdered(Node node1, Node node2, int depth) {
+
+  }
+
   @Override
   public int getChildPos(byte k) {
     for (int i = 0; i < count; i++) {
