@@ -38,6 +38,27 @@ public class Node4 extends BranchNode {
 
   }
 
+  // there are a few ways that we create a Node4 by growing
+  // 1 - from 2 leaf nodes, when inserting
+  // in this case we just need to order the nodes, and work our the common prefix
+  // 2 - from a branch node and a leaf node, when inserting a new leaf
+  // in this case we need to order the nodes, and work our the common prefix, but also adjust the Branch node to reduce it prefix
+
+  private static Node4 createOrdered(Node node1, Node node2, long highPart, int depth, int prefixLength) {
+    Node4 node4 = new Node4(prefixLength);
+    node4.count = 2;
+    node4.firstV = LongUtils.initWithFirst4Byte(highPart);
+    node4.children[0] = node1;
+    node4.children[1] = node2;
+    if (node1 instanceof BranchNode) {
+      copyPrefix((BranchNode) node1, node4);
+    } else if (node2 instanceof BranchNode) {
+      copyPrefix((BranchNode) node2, node4);
+    }
+    insertionSort(node4);
+    return node4;
+  }
+
   @Override
   public int getChildPos(byte k) {
     for (int i = 0; i < count; i++) {

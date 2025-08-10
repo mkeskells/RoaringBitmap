@@ -182,10 +182,7 @@ public class Art {
     }
     return null;
   }
-
-
-
-    class Toolkit {
+  class Toolkit {
 
     Node freshMatchedParentNode; // indicating a fresh parent node while the original
     // parent node shrunk and changed
@@ -225,84 +222,12 @@ public class Art {
   static byte getByte(long highPart, int index) {
     return (byte)(highPart >>> (56 - (index <<3)));
   }
+
   public <T> long findOrCreate(long highPart, ToLongFunction<Supplier<T>> nextContainer, Supplier<T> ifNotFound) {
-    highPart = onlyHighPart(highPart);
-    LeafNode result;
+    return 0;
+  }
 
-    if (root == null) {
-      result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
-      root = result;
-    } else {
-      int depth = 0;
-      int parentIndexInGrandParent = ILLEGAL_IDX;
-      BranchNode grandParent = null;
-      Node parent = root;
-      // on  each cycle
-      // if gParent == null, parent will be the next root
-      // if gParent != null, parent should replace gParent[parentIndexInGrandParent]
-      // depth is the depth of parent in the trie
-      // result is the leaf node, or null if we are just finding
-      while (true) {
-
-        if (parent instanceof LeafNode) {
-          LeafNode leafNode = (LeafNode) parent;
-          if (leafNode.getKey() == highPart) {
-            result = leafNode;
-          } else {
-            if (ifNotFound == null) {
-              return -1;
-            }
-            result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
-            Node4 split = Node4.create(leafNode, result, highPart, depth);
-            parent = split;
-          }
-          break;
-        } else {
-          BranchNode parentBranch = (BranchNode) parent;
-          //is parent the real parent - does the prefix match
-          if (parentBranch.prefixLength > 0) {
-            if (prefixMatches(parentBranch, depth, highPart)) {
-              depth += parentBranch.prefixLength;
-            } else {
-              if (ifNotFound == null) {
-                return -1;
-              }
-              result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
-              Node4 split = Node4.create(parentBranch, result, highPart, depth);
-              parent = split;
-              break;
-            }
-          }
-          //OK so parent is ok, and depth is adjusted. Let try to move to the next level
-
-          byte nextIndex = getByte(highPart, depth);
-          //TODO create getChildPosOrInsertionPoint
-          int childPos = parentBranch.getChildPos(nextIndex);
-          if (childPos == ILLEGAL_IDX) {
-            if (ifNotFound == null) {
-              return -1;
-            }
-            result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
-            parent = parentBranch.add(leaf, depth);
-            break;
-          } else {
-            Node childNode = parentBranch.getChild(childPos);
-
-            grandParent = parentBranch;
-            parentIndexInGrandParent = childPos;
-            parent = childNode;
-            depth += 1;
-
-          }
-        }
-      }
-      if (grandParent == null) {
-        root = parent;
-      } else {
-        grandParent.replaceNode(parentIndexInGrandParent, parent);
-      }
-    }
-    return result.getContainerIdx();
+  private boolean prefixMatches(BranchNode parentBranch, int depth, long highPart) {
   }
 
 
