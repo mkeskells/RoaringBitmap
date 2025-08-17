@@ -3,6 +3,7 @@ package org.roaringbitmap.art;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public abstract class BranchNode extends Node {
 
@@ -233,5 +234,21 @@ public abstract class BranchNode extends Node {
         return super.serializeHeaderSizeInBytes() + prefixLength();
     }
 
-
+    /**
+     * shrink the prefix by the specified number of bytes
+     * @param bytes the number of bytes to shrink, must be greater than 0 and less than or equal to the current prefix length
+     * @return this node, or an equivenent node with a smaller prefix
+     */
+    BranchNode shrinkPrefixBy(int bytes) {
+        assert bytes > 0 && bytes <= prefixLength();
+        byte prefixLength = this.prefixLength();
+        if (bytes == prefixLength) {
+            // shrink to empty prefix
+            this.prefix = Art.EMPTY_BYTES;
+        } else {
+            prefix = Arrays.copyOfRange(prefix, bytes, prefixLength);
+        }
+        //in the future we may remove the prefix as an array, and in that case the node may be different
+        return this;
+    }
 }

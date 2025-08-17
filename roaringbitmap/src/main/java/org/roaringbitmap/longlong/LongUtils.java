@@ -114,6 +114,19 @@ public class LongUtils {
             | (long) (key[4] & 0xff) << 24
             | (long) (key[5] & 0xff) << 16;
   }
+  /**
+   * get the long from the big endian representation bytes
+   *
+   * @param key the byte array. Max length 6 bytes
+   * @return the long data
+   */
+  public static long fromArray(byte[] key) {
+    long result = 0;
+    for (int i = 0; i < key.length; i++) {
+      result |= ((long) (key[i] & 0xff)) << ((5 - i) * 8);
+    }
+    return result;
+  }
 
   /**
    * initialize a long value with the given fist 32 bit

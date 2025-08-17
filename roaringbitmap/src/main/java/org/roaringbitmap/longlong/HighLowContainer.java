@@ -16,6 +16,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.NoSuchElementException;
+import java.util.function.Supplier;
 
 public class HighLowContainer {
 
@@ -70,6 +71,12 @@ public class HighLowContainer {
   public void put(byte[] highPart, Container container) {
     long containerIdx = containers.addContainer(container);
     art.insert(highPart, containerIdx);
+  }
+
+  public ContainerWithIndex findOrCreateContainer(long highPart, Supplier<Container> ifNotFound) {
+    long containerIdx = art.findOrCreateByKey(highPart, containers::addContainer, ifNotFound);
+      Container container = containers.getContainer(containerIdx);
+      return new ContainerWithIndex(container, containerIdx);
   }
 
   /**
@@ -325,4 +332,5 @@ public class HighLowContainer {
     }
     return false;
   }
+
 }

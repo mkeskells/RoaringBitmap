@@ -1,12 +1,17 @@
 package org.roaringbitmap.art;
 
 import org.roaringbitmap.ArraysShim;
+import org.roaringbitmap.Container;
 import org.roaringbitmap.longlong.LongUtils;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.function.Supplier;
+import java.util.function.ToLongFunction;
+
+import static org.roaringbitmap.art.BranchNode.ILLEGAL_IDX;
 
 /**
  * See: https://db.in.tum.de/~leis/papers/ART.pdf a cpu cache friendly main memory data structure.
@@ -221,6 +226,124 @@ public class Art {
     }
     return null;
   }
+
+    /**
+     * Find or create a leaf node by the high part of the key.
+     * If the leaf node is not found, it will be created with the value returned by
+     * nextContainer.applyAsLong(ifNotFound).
+     *
+     * @param highPart the high part of the key
+     * @param nextContainer a function to get the next container index
+     * @param ifNotFound a supplier to provide a value if the key is not found
+     * @return the container index of the found or created leaf node
+     */
+  public <T> long findOrCreateByKey(long highPart, ToLongFunction<Supplier<T>> nextContainer, Supplier<T> ifNotFound) {
+    LeafNode result;
+
+    if (root == null) {
+      result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
+      root = result;
+      return result.getContainerIdx();
+    }
+      byte depth = 0;
+      byte parentKeyInGrandParent = 0;
+      BranchNode grandParent = null;
+      Node parent = root;
+      Node originalParent;
+      // on  each cycle
+      // if gParent == null, parent will be the next root
+      // if gParent != null, parent should replace grandParent at key parentKeyInGrandParent
+      // depth is the depth of parent in the trie
+      // result is the leaf node, or null if we are just finding
+
+      //Parent can grow, so we need to keep track of the parent index in grandParent
+      // but grandParent cant.
+      while (true) {
+        //keep a copy of the original parent, so we can see if it changes, and adjust the tree
+        originalParent = parent;
+
+        //usually a branch node, so lets test that first
+        if (parent instanceof BranchNode) {
+          BranchNode parentBranch = (BranchNode) parent;
+          //is parent the real parent - does the prefix match?
+          byte prefixLength = parentBranch.prefixLength();
+          if (prefixLength > 0) {
+            byte matchLength = prefixMatchLength(LongUtils.fromArray(parentBranch.prefix), depth, prefixLength, highPart);
+            if (matchLength == prefixLength) {
+              // prefix matches, so we can just continue
+              depth += prefixLength;
+              continue;
+            } else {
+              //so we have a partial match, we need to split the branch
+              // for example, if the prefix is [1,2,3] and the highPart is 0xab99010204, and depth 2
+              // we have a match length of 2,
+              // so we create a new parent with prefix is [1,2]
+              // with 2 children - the current parent prefix shrunk to [], at key 3
+              // and add a leaf node with key 4
+              byte branchKey = parentBranch.prefix[matchLength];
+              parentBranch = parentBranch.shrinkPrefixBy(matchLength + 1);
+              result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
+              parent = Node4.create(parentBranch, result, branchKey, LongUtils.getByte(highPart, depth + matchLength), highPart, depth, (byte) depth + matchLength);
+              break;
+            }
+          }
+          //OK so parent is ok, and depth is adjusted. Let try to move to the next level
+
+          byte childKey = LongUtils.getByte(highPart, depth);
+          // We optimise for the case where the childKey is already present at this level, and we are walking a tree
+          // it should be the common case, so we try to find the child at this level
+          //we could calculate the position for the access, but that means that we have to have 2 accesses on the common path,
+          // so they shoul dbe faster
+          Node childNode = parentBranch.getChildAtKey(childKey);
+          if (childNode == null) {
+            result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
+            parent = parentBranch.insert(result, childKey);
+            break;
+          } else {
+            grandParent = parentBranch;
+            parentKeyInGrandParent = childKey;
+            parent = childNode;
+            depth += 1;
+
+          }
+        } else {
+          LeafNode leafNode = (LeafNode) parent;
+          long leafNodeKey = leafNode.getKey();
+          if (leafNodeKey == highPart) {
+            result = leafNode;
+          } else {
+            //we have to create a new Node4 with the two leaves
+            result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
+            byte matchLength = prefixMatchLength(leafNodeKey, depth, (byte)6, highPart);
+
+            // create a new parent node4 with the current leaf node and the new leaf node
+            Node4 split = Node4.create(leafNode, result,
+                    LongUtils.getByte(leafNodeKey, depth + matchLength), LongUtils.getByte(highPart, depth + matchLength),
+                    highPart, depth, (byte) (depth + matchLength));
+            parent = split;
+          }
+          break;
+        }
+      }
+      if (grandParent == null) {
+        root = parent;
+      } else if (parent != originalParent) {
+        // if the parent has changed, we need to replace it in the grandParent
+        int pos = grandParent.getChildPos(parentKeyInGrandParent);
+        grandParent.replaceNode(pos, parent);
+      }
+    return result.getContainerIdx();
+  }
+
+  private byte prefixMatchLength(long prefix, byte depth, byte prefixLength, long highPart) {
+    for (byte i = 0; i < prefixLength; i++) {
+      if (LongUtils.getByte(prefix,i) != LongUtils.getByte(highPart, depth + i)) {
+        return i;
+      }
+    }
+    return prefixLength;
+  }
+
 
   class Toolkit {
 

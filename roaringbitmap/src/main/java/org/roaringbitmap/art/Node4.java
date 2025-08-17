@@ -16,6 +16,40 @@ public class Node4 extends BranchNode {
   public Node4(int compressedPrefixSize) {
     super(compressedPrefixSize);
   }
+  public static Node4 create(Node node1, Node node2,  byte node1Key, byte node2Key,
+                             long prefixSource, byte prefixStart, byte prefixlength) {
+    if ((char)node1Key > (char)node2Key) {
+      return createOrdered(node1, node2, node1Key, node2Key, prefixSource, prefixStart, prefixlength);
+    } else {
+      return createOrdered(node2, node1, node2Key, node1Key, prefixSource, prefixStart, prefixlength);
+    }
+  }
+  /**
+   * create a Node4 with two child nodes and their keys.
+   * It is required that node1Key < node2Key when conpared as unsigned bytes.
+   * The child nodes must have the prefixes adjusted before callingt this method.
+   * @param node1 the first node
+   * @param node2 the second node
+   * @param node1Key the key of the first node
+   * @param node2Key the key of the second node
+   * @param prefixSource the source of the prefix, in big endian order
+   * @param prefixStart the start index of the prefix in the source
+   * @param prefixLength the end index of the prefix in the source
+   * @return a Node4 instance with the two nodes as children
+   */
+  public static Node4 createOrdered(Node node1, Node node2,  byte node1Key, byte node2Key,
+                             long prefixSource, byte prefixStart, byte prefixLength) {
+    Node4 node4 = new Node4(prefixLength);
+    node4.count = 2;
+    node4.key = IntegerUtil.init2Bytes(node1Key, node2Key);
+    node4.children[0] = node1;
+    node4.children[1] = node2;
+    for (int i = prefixStart; i < prefixStart + prefixLength; i++) {
+      node4.prefix[i - prefixStart] = LongUtils.getByte(prefixSource, i);
+    }
+    return node4;
+  }
+
 
   @Override
   protected NodeType nodeType() {

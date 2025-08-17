@@ -41,6 +41,9 @@ public class IntegerUtil {
     v |= (bv & 0xFF) << i;
     return v;
   }
+  public static int init2Bytes(byte b1, byte b2) {
+    return (b1 << 24) | ((b2 & 0xFF) << 16);
+  }
 
   /**
    * shift the byte left from the specified position
