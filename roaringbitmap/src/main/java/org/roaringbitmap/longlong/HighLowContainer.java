@@ -74,7 +74,7 @@ public class HighLowContainer {
   }
 
   public ContainerWithIndex findOrCreateContainer(long highPart, Supplier<Container> ifNotFound) {
-    long containerIdx = art.findOrCreateByKey(highPart, containers::addContainer, ifNotFound);
+    long containerIdx = art.findOrCreateByKey(highPart, x -> containers.addContainer(x.get()), ifNotFound);
       Container container = containers.getContainer(containerIdx);
       return new ContainerWithIndex(container, containerIdx);
   }

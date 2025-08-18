@@ -283,7 +283,7 @@ public class Art {
               byte branchKey = parentBranch.prefix[matchLength];
               parentBranch = parentBranch.shrinkPrefixBy(matchLength + 1);
               result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
-              parent = Node4.create(parentBranch, result, branchKey, LongUtils.getByte(highPart, depth + matchLength), highPart, depth, (byte) depth + matchLength);
+              parent = Node4.create(parentBranch, result, branchKey, LongUtils.getByte(highPart, depth + matchLength), highPart, depth,  matchLength);
               break;
             }
           }
