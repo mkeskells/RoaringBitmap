@@ -52,7 +52,6 @@ public class Roaring64Bitmap implements Externalizable, LongBitmapDataProvider {
    *
    * @param x long value
    */
-  @Override
   public void addLong(long x) {
     byte[] high = LongUtils.highPart(x);
     char low = LongUtils.lowPart(x);
@@ -67,13 +66,16 @@ public class Roaring64Bitmap implements Externalizable, LongBitmapDataProvider {
       highLowContainer.put(high, arrayContainer);
     }
   }
+
   public void addLongNew(long x) {
     long high = LongUtils.highPartOnly(x);
     char low = LongUtils.lowPart(x);
     ContainerWithIndex containerWithIndex = highLowContainer.findOrCreateContainer(high, ArrayContainer::new);
     Container container = containerWithIndex.getContainer();
     Container freshOne = container.add(low);
-    highLowContainer.replaceContainer(containerWithIndex.getContainerIdx(), freshOne);
+    if (freshOne != container) {
+      highLowContainer.replaceContainer(containerWithIndex.getContainerIdx(), freshOne);
+    }
   }
 
   /**

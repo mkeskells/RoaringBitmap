@@ -18,7 +18,7 @@ public class Node4 extends BranchNode {
   }
   public static Node4 create(Node node1, Node node2,  byte node1Key, byte node2Key,
                              long prefixSource, byte prefixStart, byte prefixlength) {
-    if ((char)node1Key > (char)node2Key) {
+    if ((char)node1Key < (char)node2Key) {
       return createOrdered(node1, node2, node1Key, node2Key, prefixSource, prefixStart, prefixlength);
     } else {
       return createOrdered(node2, node1, node2Key, node1Key, prefixSource, prefixStart, prefixlength);

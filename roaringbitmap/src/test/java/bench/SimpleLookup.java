@@ -14,7 +14,8 @@ public class SimpleLookup {
     SimpleLookup lookup = new SimpleLookup();
 
 //    lookup.runBenchmark(lookup::lookupPopulated, "lookupPopulated", 5);
-    lookup.runBenchmark(lookup::addSorted, "addSorted", 5);
+//    lookup.runBenchmark(lookup::addSortedOld, "addSorted", 5);
+//    lookup.runBenchmark(lookup::addSortedNew, "addSortedNew", 5);
 //    lookup.runBenchmark(lookup::addUnsorted, "addUnsorted", 5);
 
 //    lookup.runBenchmark(lookup::addSortedSmall, "addSortedSmall", 50);
@@ -73,15 +74,22 @@ public class SimpleLookup {
 //      }
 //    }
 //    return result;
+////  }
+//
+//  public Boolean addSortedOld() {
+//    Roaring64Bitmap test = new Roaring64Bitmap();
+//    for (long index : sortedIndexes) {
+//      test.addLongOld(index);
+//    }
+//    return test.isEmpty();
 //  }
-
-  public Boolean addSorted() {
-    Roaring64Bitmap test = new Roaring64Bitmap();
-    for (long index : sortedIndexes) {
-      test.addLong(index);
-    }
-    return test.isEmpty();
-  }
+//  public Boolean addSortedNew() {
+//    Roaring64Bitmap test = new Roaring64Bitmap();
+//    for (long index : sortedIndexes) {
+//      test.addLong(index);
+//    }
+//    return test.isEmpty();
+//  }
   public Boolean addUnsorted() {
     Roaring64Bitmap test = new Roaring64Bitmap();
     for (long index : indexes) {

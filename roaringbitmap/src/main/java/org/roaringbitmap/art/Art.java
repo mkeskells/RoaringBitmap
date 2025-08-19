@@ -269,11 +269,7 @@ public class Art {
           byte prefixLength = parentBranch.prefixLength();
           if (prefixLength > 0) {
             byte matchLength = prefixMatchLength(LongUtils.fromArray(parentBranch.prefix), depth, prefixLength, highPart);
-            if (matchLength == prefixLength) {
-              // prefix matches, so we can just continue
-              depth += prefixLength;
-              continue;
-            } else {
+            if (matchLength != prefixLength) {
               //so we have a partial match, we need to split the branch
               // for example, if the prefix is [1,2,3] and the highPart is 0xab99010204, and depth 2
               // we have a match length of 2,
@@ -286,14 +282,16 @@ public class Art {
               parent = Node4.create(parentBranch, result, branchKey, LongUtils.getByte(highPart, depth + matchLength), highPart, depth,  matchLength);
               break;
             }
+            // prefix matches, so we can just continue
+            depth += prefixLength;
           }
           //OK so parent is ok, and depth is adjusted. Let try to move to the next level
 
           byte childKey = LongUtils.getByte(highPart, depth);
-          // We optimise for the case where the childKey is already present at this level, and we are walking a tree
-          // it should be the common case, so we try to find the child at this level
-          //we could calculate the position for the access, but that means that we have to have 2 accesses on the common path,
-          // so they shoul dbe faster
+          // We optimize for the case where the childKey is already present at this level, and we are walking a tree.
+          // It should be the common case, so we try to find the child at this level.
+          // We could calculate the position for the access, but that means that we have to have 2 accesses on the common path,
+          // so this should be faster
           Node childNode = parentBranch.getChildAtKey(childKey);
           if (childNode == null) {
             result = new LeafNode(highPart, nextContainer.applyAsLong(ifNotFound));
