@@ -113,10 +113,11 @@ public abstract class BranchNode extends Node {
     abstract void replaceChildren(Node[] children);
 
     /**
-     * get the position of a child corresponding to the input key 'k'
+     * get the position of a child corresponding to the input key 'k'. If
+     * there is no such key in the node, returns {@link #ILLEGAL_IDX}.
      *
      * @param k a key value of the byte range
-     * @return the child position corresponding to the key 'k'
+     * @return the child position corresponding to the key 'k'.
      */
     public abstract int getChildPos(byte k);
 
