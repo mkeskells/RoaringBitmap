@@ -22,7 +22,7 @@ public class AddRoaring64 {
     public int addedSize = 0;
 
     @Param({"true", "false"})
-    public boolean orderedAdd = false;
+    public boolean ordered = false;
 
     long[] addedIndexes;
     Roaring64Bitmap bitmapInitial;
@@ -61,7 +61,7 @@ public class AddRoaring64 {
         Collections.shuffle(list, new Random(1L));
       }
       addedIndexes = list.stream().mapToLong(Long::longValue).limit(addedSize).toArray();
-      if (!orderedAdd) {
+      if (!ordered) {
         Arrays.sort(addedIndexes);
       }
 
@@ -87,7 +87,7 @@ public class AddRoaring64 {
             missedSet.add(r.nextLong());
         }
 
-        if (orderedAdd) {
+        if (ordered) {
           addedIndexes = missedSet.stream().mapToLong(Long::longValue).sorted().toArray();
         } else {
           List<Long> list = new ArrayList<>(missedSet);
