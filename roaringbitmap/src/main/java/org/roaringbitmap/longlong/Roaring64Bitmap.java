@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -46,25 +45,27 @@ public class Roaring64Bitmap implements Externalizable, LongBitmapDataProvider {
   /**
    * Add the value to the container (set the value to "true"), whether it already appears or not.
    *
-   * Java lacks native unsigned longs but the x argument is considered to be unsigned. Within
+   * Java lacks native unsigned longs but the value argument is considered to be unsigned. Within
    * bitmaps, numbers are ordered according to{@link Long#toUnsignedString}. We order the numbers
    * like 0, 1, ..., 9223372036854775807, -9223372036854775808, -9223372036854775807,..., -1.
    *
-   * @param x long value
+   * @param value long value
    */
   @Override
-  public void addLong(long x) {
-    byte[] high = LongUtils.highPart(x);
-    char low = LongUtils.lowPart(x);
+  public void addLong(long value) {
+    long high = LongUtils.highPartOnly(value);
+    char low = LongUtils.lowPart(value);
     ContainerWithIndex containerWithIndex = highLowContainer.searchContainer(high);
     if (containerWithIndex != null) {
       Container container = containerWithIndex.getContainer();
       Container freshOne = container.add(low);
-      highLowContainer.replaceContainer(containerWithIndex.getContainerIdx(), freshOne);
+      if (freshOne != container) {
+        highLowContainer.replaceContainer(containerWithIndex.getContainerIdx(), freshOne);
+      }
     } else {
       ArrayContainer arrayContainer = new ArrayContainer();
       arrayContainer.add(low);
-      highLowContainer.put(high, arrayContainer);
+      highLowContainer.put(LongUtils.highPart(value), arrayContainer);
     }
   }
 
@@ -1021,11 +1022,34 @@ public class Roaring64Bitmap implements Externalizable, LongBitmapDataProvider {
    * "add" repeatedly. The provided integers values don't have to be in sorted order, but it may be
    * preferable to sort them from a performance point of view.
    *
-   * @param dat set values
+   * @param values set values
    */
-  public void add(long... dat) {
-    for (long oneLong : dat) {
-      addLong(oneLong);
+  public void add(long... values) {
+    int index = 0;
+    while (index < values.length) {
+      long high = LongUtils.highPartOnly(values[index]);
+      ContainerWithIndex containerWithIdx = highLowContainer.searchContainer(high);
+      Container originalContainer;
+      Container resultContainer;
+      if (containerWithIdx == null) {
+        originalContainer = null;
+        resultContainer = new ArrayContainer();
+      } else {
+        originalContainer = containerWithIdx.getContainer();
+        resultContainer = originalContainer;
+      }
+      do {
+        char low = LongUtils.lowPart(values[index]);
+        resultContainer = resultContainer.add(low);
+        index++;
+      } while (index < values.length && high == LongUtils.highPartOnly(values[index]));
+      if (originalContainer != resultContainer) {
+        if (containerWithIdx == null) {
+          highLowContainer.put(LongUtils.highPart(high), resultContainer);
+        } else {
+          highLowContainer.replaceContainer(containerWithIdx.getContainerIdx(), resultContainer);
+        }
+      }
     }
   }
 

@@ -5,6 +5,9 @@ import static org.roaringbitmap.Util.toUnsignedLong;
 import static org.roaringbitmap.ValidationRangeConsumer.Value.ABSENT;
 import static org.roaringbitmap.ValidationRangeConsumer.Value.PRESENT;
 
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.roaringbitmap.RoaringBitmap;
 import org.roaringbitmap.ValidationRangeConsumer;
 import org.roaringbitmap.art.LeafNode;
@@ -20,6 +23,8 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class TestRoaring64Bitmap {
 
@@ -2633,4 +2638,50 @@ public class TestRoaring64Bitmap {
   public void testEmptyRoaring64BitmapClonesWithoutException() {
     assertEquals(new Roaring64Bitmap(), new Roaring64Bitmap().clone());
   }
+
+
+  public static Stream<Arguments> addValuesData() {
+    return Stream.of(
+        Arguments.of("empty", (Supplier<long[]>) () -> new long[] {}),
+        Arguments.of("one value", (Supplier<long[]>) () ->new long[] {42L}),
+            Arguments.of("two values ordered", (Supplier<long[]>) () ->new long[] {1L, 2L}),
+            Arguments.of("two values", (Supplier<long[]>) () ->new long[] {2L, 1L}),
+            Arguments.of("ten values ordered", (Supplier<long[]>) () ->new long[] {0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L}),
+            Arguments.of("ten values", (Supplier<long[]>) () ->new long[] {56L, 1L, 5L, 13L, 24L, 99995L, 6L, 7L, 8L, -9L}),
+            Arguments.of("100 ordered", orderedLongs(100)),
+            Arguments.of("1000 ordered", orderedLongs(1000)),
+            Arguments.of("10000 ordered", orderedLongs(10000)),
+            Arguments.of("100000 ordered", orderedLongs(100000)),
+            Arguments.of("1000000 ordered", orderedLongs(1000000)),
+            Arguments.of("100 unordered", unorderedLongs(100)),
+            Arguments.of("1000 unordered", unorderedLongs(1000)),
+            Arguments.of("10000 unordered", unorderedLongs(10000)),
+            Arguments.of("100000 unordered", unorderedLongs(100000)),
+            Arguments.of("1000000 unordered", unorderedLongs(1000000))
+    );
+  }
+
+  private static Supplier<long[]> orderedLongs(int size) {
+    Random r = new Random(0L);
+    return () -> r.longs(size).sorted().toArray();
+  }
+  private static Supplier<long[]> unorderedLongs(int size) {
+    Random r = new Random(0L);
+    return () -> r.longs(size).toArray();
+  }
+
+  @ParameterizedTest
+  @MethodSource("addValuesData")
+  void createWithArray(String name, Supplier<long[]> fn) {
+    long[] values = fn.get();
+    Roaring64Bitmap bitmapOf = Roaring64Bitmap.bitmapOf(values);
+    Roaring64Bitmap rb = new Roaring64Bitmap();
+    for (long v : values) {
+      rb.add(v);
+    }
+    Assertions.assertEquals(values.length, rb.getLongCardinality());
+    Assertions.assertEquals(values.length, bitmapOf.getLongCardinality());
+    Assertions.assertEquals(bitmapOf, rb);
+  }
+
 }
