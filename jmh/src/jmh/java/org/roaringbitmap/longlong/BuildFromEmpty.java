@@ -11,6 +11,23 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 2, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 5, time = 1000, timeUnit = TimeUnit.MILLISECONDS)
 public class BuildFromEmpty {
+  public static void main(String[] args) {
+    BenchmarkState state = new BenchmarkState();
+    state.size = 1000000;
+    state.ordered = true;
+    state.setup();
+    BuildFromEmpty benchmark = new BuildFromEmpty();
+    int count = 0;
+    while (true) {
+      Roaring64Bitmap x = benchmark.bitmapOf(state);
+      if (x.contains(7)) {
+        count++;
+      }
+      if (count % 100000 == 1) {
+        System.out.println("Count: " + count);
+      }
+    }
+  }
 
   @State(Scope.Benchmark)
   public static class BenchmarkState {

@@ -1025,9 +1025,13 @@ public class Roaring64Bitmap implements Externalizable, LongBitmapDataProvider {
    * @param values set values
    */
   public void add(long... values) {
+    if (values.length == 0) {
+      return;
+    }
     int index = 0;
+    long value = values[0];
     while (index < values.length) {
-      long high = LongUtils.highPartOnly(values[index]);
+      long high = LongUtils.highPartOnly(value);
       ContainerWithIndex containerWithIdx = highLowContainer.searchContainer(high);
       Container originalContainer;
       Container resultContainer;
@@ -1039,10 +1043,14 @@ public class Roaring64Bitmap implements Externalizable, LongBitmapDataProvider {
         resultContainer = originalContainer;
       }
       do {
-        char low = LongUtils.lowPart(values[index]);
+        char low = LongUtils.lowPart(value);
         resultContainer = resultContainer.add(low);
         index++;
-      } while (index < values.length && high == LongUtils.highPartOnly(values[index]));
+        if (index >= values.length) {
+          break;
+        }
+        value = values[index];
+      } while (high == LongUtils.highPartOnly(value));
       if (originalContainer != resultContainer) {
         if (containerWithIdx == null) {
           highLowContainer.put(LongUtils.highPart(high), resultContainer);
